@@ -95,12 +95,47 @@ info = [
     pass
 
 
-def shortest_connection() :
+def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 15]]],
+                        blocked: set[tuple[tuple[str, str], tuple[str, str], int]])\
+                        -> set[tuple[tuple[str, str], tuple[str, str], int]]:
     """
-    Function finds the shortest ways to restore
-    connection
+    Finds a way to connect all points to the regional center as cheap
+    (cost measured in km of roads restored) as possible.
+    Input:
+    {
+        ("village", "A"): {("city", "B"), ("village", "C")},
+        ("city", "B"): {("regional_center"), ("city", "A")},
+        ("village", "C"): {("village", "A"), ("regional_center", "D")},
+        ("regional_center", "D"): {("city", "B"), ("village", "C")}
+    },
+    {
+        (("village", "A"), ("city", "B"), 10)
+        (("regional_center", "D"), ("village", "C"), 8)
+    }
+
+    Output:
+    {
+        (("regional_center", "D"), ("village", "C"), 8)
+    }
     """
-    pass
+    blocked = blocked.copy()
+    restored = set()
+    while len(blocked) > 0:
+        disconnected, groups = unconnected_places(paths, blocked)
+        accessible = groups[0]
+        options = []
+        for node in accessible:
+            for vertice in disconnected:
+                if vertice in paths[node]:
+                    for block in blocked:
+                        if node in block and vertice in block:
+                            options.append(block)
+        options = sorted(options, key=lambda x: x[2])
+        choice = options[0]
+        blocked.remove(choice)
+        restored.add(choice)
+    return restored
+
 
 def write_to_file(filename : str ) -> None: # plus two arguments as a result of func unconnected_places and shortest_places
     """
