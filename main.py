@@ -99,13 +99,9 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 1
                         blocked: set[tuple[tuple[str, str], tuple[str, str], int]])\
                         -> set[tuple[tuple[str, str], tuple[str, str], int]]:
     """
+    Finds a way to connect all points to the regional center as cheap
+    (cost measured in km of roads restored) as possible.
     Input:
-    # {
-    #     ("village", "A"): {(("city", "B"), 10), (("village", "C"), 5)},
-    #     ("city", "B"): {(("regional_center", "D"), 15), (("city", "A"), 10)},
-    #     ("village", "C"): {(("village", "A"), 5), (("regional_center", "D"), 8)},
-    #     ("regional_center", "D"): {(("city", "B"), 15), (("village", "C"), 8)}
-    # },
     {
         ("village", "A"): {("city", "B"), ("village", "C")},
         ("city", "B"): {("regional_center"), ("city", "A")},
