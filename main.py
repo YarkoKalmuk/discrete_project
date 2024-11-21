@@ -97,7 +97,7 @@ info = [
 
 def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 15]]],
                         blocked: set[tuple[tuple[str, str], tuple[str, str], int]])\
-    -> set[tuple[tuple[str, str], tuple[str, str], int]]:
+                        -> set[tuple[tuple[str, str], tuple[str, str], int]]:
     """
     Input:
     # {
