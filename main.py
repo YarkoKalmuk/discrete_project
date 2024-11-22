@@ -44,40 +44,69 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
     pass
 
 
-def unconnected_places(all_roads: dict[tuple[str, str], set[tuple[str, str]]],
-                            blocked_roads: set[tuple[tuple[str, str], tuple[str, str]]])\
-                                                        -> list[ set[ tuple[str, str]]]:
+def unconnected_places(
+    all_roads: dict[tuple[str, str], set[tuple[str, str]]],
+    blocked_roads: set[tuple[tuple[str, str], tuple[str, str]]]
+) -> list[set[tuple[str, str]]]:
     """
-    Function finds all unconnected places and returns them
+    Function finds all unconnected places and returns them.
 
     :param all_roads: dict[tuple[str, str], set[tuple[str, str]]], A dictionary,
-    where key is name and type of place and value is set of all places that are connected with it
-    with one road.
+    where the key is the name and type of a place, and the value is a set of
+    all places directly connected to it by one road.
 
     :param blocked_roads: set[tuple[tuple[str, str], tuple[str, str]]], A set
-    of tuples as blocked roads.
+    of tuples representing roads that are blocked.
 
-    :return: list[ set[ tuple[str, str]]], A list, where each element is
-    a set of connected components. First element has regional center in it.
+    :return: list[set[tuple[str, str]]], A list where each element is a set
+    of connected components. The first element includes the regional center.
 
-    Example:
+    Input:
+    all_roads = {
+                ("village", "A"): {("city", "B"), ("village", "C")},
+                ("city", "B"): {("regional_center", "D")},
+                ("village", "C"): {("village", "A")},
+                ("regional_center", "D"): {("city", "B")}
+                }
 
-all_roads = {
-            ("village", "A"): {("city", "B"), ("village", "C")},
-            ("city", "B"): {("regional_center", "D")},
-            ("village", "C"): {("village", "A")},
-            ("regional_center", "D"): {("city", "B")},
-            },
-blocked_roads = { (("village", "A"), ("city", "B")) }
+    blocked_roads = {(("village", "A"), ("city", "B"))}
+
+    unconnected_places(all_roads, blocked_roads)
 
     Output:
 
-[
-    {("city", "B"), ("regional_center", "D")},
-    {("village", "A"), ("village", "C")}
-]
+    [
+    {('regional_center', 'D'), ('city', 'B')}, 
+    {('village', 'A'), ('village', 'C')}
+    ]
     """
-    pass
+    # Remove blocked roads from the connections
+    roads = {}
+    for place, connections in all_roads.items():
+        filtered_connections = {conn for conn in connections
+            if (place, conn) not in blocked_roads and (conn, place) not in blocked_roads}
+        roads[place] = filtered_connections
+
+    components = []
+
+    # Find all connected components
+    for place in list(roads):
+        if place in roads:
+            component = set()
+            stack = [place]
+            while stack:
+                node = stack.pop()
+                if node in roads:
+                    component.add(node)
+                    stack.extend(roads[node])
+                    del roads[node]
+            components.append(component)
+
+    # Sort components: put the one containing the regional center first
+    components.sort(key=lambda comp:
+            any((place[0] == "regional_center" for place in comp)), reverse=True)
+
+    return components
 
 def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 15]]],
                         blocked: set[tuple[tuple[str, str], tuple[str, str], int]])\
