@@ -123,6 +123,23 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     },{(("village", "A"), ("city", "B"), 10),\
         (("regional_center", "D"), ("village", "C"), 8)})
     {(('regional_center', 'D'), ('village', 'C'), 8)}
+    >>> shortest_connection({\
+        ("city", "A"): {("city", "B"), ("regional_center", "C"), ("city", "I")},\
+        ("city", "B"): {("city", "A"), ("regional_center", "C")},\
+        ("regional_center", "C"): {("city", "B"), ("city", "A"), ("city", "F")},\
+        ("city", "H"): {("city", "G"), ("city", "I")},\
+        ("city", "G"): {("city", "H"), ("city", "I"), ("city", "D")},\
+        ("city", "I"): {("city", "G"), ("city", "H"), ("city", "A")},\
+        ("city", "E"): {("city", "D"), ("city", "F")},\
+        ("city", "F"): {("city", "D"), ("city", "E"), ("regional_center", "C")},\
+        ("city", "D"): {("city", "F"), ("city", "E"), ("city", "G")},\
+    },{(("city", "I"), ("city", "A"), 3),\
+    (("city", "G"), ("city", "D"), 5),\
+    (("city", "E"), ("city", "F"), 1),\
+    (("city", "A"), ("city", "C"), 2),\
+    (("regional_center", "C"), ("city", "F"), 3)}) == {\
+    (("regional_center", "C"), ("city", "F"), 3), (("city", "I"), ("city", "A"), 3)}
+    True
     """
     blocked = blocked.copy()
     restored = set()
