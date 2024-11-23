@@ -31,9 +31,9 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
     Output:
 [
     {
-        ("village", "A"): {("city", "B", 10), ("village", "C", 5)},
-        ("city", "B"): {("regional_center", "D", 15)},
-        ("village", "C"): ("village", "A", 5)
+        ("village", "A"): {("city", "B"), ("village", "C")},
+        ("city", "B"): {("regional_center", "D")},
+        ("village", "C"): ("village", "A")
     },
     {
         (("village", "A"), ("city", "B"), 10),
@@ -41,7 +41,36 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
     }
 ]
     """
-    pass
+    with open(filename, 'r', encoding='utf-8') as file:
+        blocked = set()
+        all_road = {}
+        status_road = True
+        for i in file:
+            line = i.strip("\n").split(", ")
+            if line == ['']:
+                continue
+            if "Заблоковані дороги:" in line:
+                status_road = False
+                continue
+            elif "Зв'язки:" in line:
+                continue
+            key1 = (line[0], line[1])
+            key2 = (line[2], line[3])
+            if status_road:
+                if key1 not in all_road:
+                    all_road[key1] = {(key2)}
+                else:
+                    all_road[key1].add(key2)
+                if key2 not in all_road:
+                    all_road[key2] = {(key1)}
+                else:
+                    all_road[key2].add(key1)
+            else:
+                block = (key1, key2, int(line[4]))
+                blocked.add(block)
+        result = [all_road, blocked]
+        return result
+print(read_file('input_example.csv'))
 
 
 def unconnected_places(
