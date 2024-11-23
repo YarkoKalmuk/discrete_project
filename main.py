@@ -108,33 +108,31 @@ def unconnected_places(
 
     return components
 
-def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 15]]],
+
+def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]],
                         blocked: set[tuple[tuple[str, str], tuple[str, str], int]])\
                         -> set[tuple[tuple[str, str], tuple[str, str], int]]:
     """
     Finds a way to connect all points to the regional center as cheap
     (cost measured in km of roads restored) as possible.
-    Input:
-    {
-        ("village", "A"): {("city", "B"), ("village", "C")},
-        ("city", "B"): {("regional_center"), ("city", "A")},
-        ("village", "C"): {("village", "A"), ("regional_center", "D")},
-        ("regional_center", "D"): {("city", "B"), ("village", "C")}
-    },
-    {
-        (("village", "A"), ("city", "B"), 10)
-        (("regional_center", "D"), ("village", "C"), 8)
-    }
-
-    Output:
-    {
-        (("regional_center", "D"), ("village", "C"), 8)
-    }
+    >>> shortest_connection({\
+        ("village", "A"): {("city", "B"), ("village", "C")},\
+        ("city", "B"): {("regional_center"), ("city", "A")},\
+        ("village", "C"): {("village", "A"), ("regional_center", "D")},\
+        ("regional_center", "D"): {("city", "B"), ("village", "C")}\
+    },{(("village", "A"), ("city", "B"), 10),\
+        (("regional_center", "D"), ("village", "C"), 8)})
+    {(('regional_center', 'D'), ('village', 'C'), 8)}
     """
     blocked = blocked.copy()
     restored = set()
-    while len(blocked) > 0:
-        disconnected, groups = unconnected_places(paths, blocked)
+    while True:
+        reblocked = {(a, b) for a, b, c in blocked}
+        groups = unconnected_places(paths, reblocked)
+        if len(groups) > 1:
+            disconnected = set.union(*groups[1:])
+        else:
+            break
         accessible = groups[0]
         options = []
         for node in accessible:
@@ -163,3 +161,8 @@ def write_to_file(filename : str ) -> None: # plus two arguments as a result of 
     pass
 
 # allows user to run module in terminal
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
