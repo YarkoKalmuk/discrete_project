@@ -46,7 +46,7 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
         all_road = {}
         status_road = True
         for i in file:
-            line = i.strip("\n").split(",")
+            line = i.strip("\n").split(", ")
             if line == ['']:
                 continue
             if "Заблоковані дороги:" in line:
@@ -54,8 +54,8 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
                 continue
             elif "Зв'язки:" in line:
                 continue
-            key1 = (line[0], line[2])
-            key2 = (line[1], line[2])
+            key1 = (line[0], line[1])
+            key2 = (line[2], line[3])
             if status_road:
                 if key1 not in all_road:
                     all_road[key1] = {(key2)}
