@@ -19,21 +19,29 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
 
     Example:
 
-    Зв'язки:
-село A, місто B, 10
-місто B, обласний центр D, 15
-село A, село C, 5
+Connections:
+city A, village B, 1
+village B, regional_center C, 1
+regional_center C, village F, 5
+village F, city E, 1
+city E, village D, 1
+village D, city G, 2
+city G, village H, 1
+village H, city I, 1
+city I, city A, 2
 
-Заблоковані дороги:
-село A, місто B, 10
-село C, обласний центр D, 15
+Blocked roads:
+city I, city A, 2
+village D, city G, 2
+regional_center C, village F, 5
+
 
     Output:
 [
     {
-        ("village", "A"): {("city", "B", 10), ("village", "C", 5)},
-        ("city", "B"): {("regional_center", "D", 15)},
-        ("village", "C"): ("village", "A", 5)
+        ("village", "A"): {("city", "B"), ("village", "C")},
+        ("city", "B"): {("regional_center", "D")},
+        ("village", "C"): ("village", "A")
     },
     {
         (("village", "A"), ("city", "B"), 10),
@@ -41,7 +49,35 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
     }
 ]
     """
-    pass
+    with open(filename, 'r', encoding='utf-8') as file:
+        blocked = set()
+        all_road = {}
+        status_road = True
+        for i in file:
+            line = i.strip("\n").split()
+            if line == []:
+                continue
+            if "Blocked" in line:
+                status_road = False
+                continue
+            elif "Connections:" in line:
+                continue
+            key1 = (line[0], line[1][:-1])
+            key2 = (line[2], line[3][:-1])
+            if status_road:
+                if key1 not in all_road:
+                    all_road[key1] = {(key2)}
+                else:
+                    all_road[key1].add(key2)
+                if key2 not in all_road:
+                    all_road[key2] = {(key1)}
+                else:
+                    all_road[key2].add(key1)
+            else:
+                block = (key1, key2, int(line[4]))
+                blocked.add(block)
+        result = [all_road, blocked]
+        return result
 
 
 def unconnected_places(
