@@ -19,14 +19,22 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
 
     Example:
 
-    Зв'язки:
-село A, місто B, 10
-місто B, обласний центр D, 15
-село A, село C, 5
+Connections:
+city A, village B, 1
+village B, regional_center C, 1
+regional_center C, village F, 5
+village F, city E, 1
+city E, village D, 1
+village D, city G, 2
+city G, village H, 1
+village H, city I, 1
+city I, city A, 2
 
-Заблоковані дороги:
-село A, місто B, 10
-село C, обласний центр D, 15
+Blocked roads:
+city I, city A, 2
+village D, city G, 2
+regional_center C, village F, 5
+
 
     Output:
 [
@@ -46,16 +54,16 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
         all_road = {}
         status_road = True
         for i in file:
-            line = i.strip("\n").split(", ")
-            if line == ['']:
+            line = i.strip("\n").split()
+            if line == []:
                 continue
-            if "Заблоковані дороги:" in line:
+            if "Blocked" in line:
                 status_road = False
                 continue
-            elif "Зв'язки:" in line:
+            elif "Connections:" in line:
                 continue
-            key1 = (line[0], line[1])
-            key2 = (line[2], line[3])
+            key1 = (line[0], line[1][:-1])
+            key2 = (line[2], line[3][:-1])
             if status_road:
                 if key1 not in all_road:
                     all_road[key1] = {(key2)}
@@ -70,6 +78,7 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
                 blocked.add(block)
         result = [all_road, blocked]
         return result
+
 
 def unconnected_places(
     all_roads: dict[tuple[str, str], set[tuple[str, str]]],

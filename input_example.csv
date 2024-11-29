@@ -1,7 +1,15 @@
-Зв'язки:
-місто, Львів, село, Брюховичі, 15
-місто, Ужгород, обласний центр, Мукачево, 30
-обласний центр, Мукачево, місто, Івано-Франківськ, 150
+Connections:
+city A, village B, 1
+village B, regional_center C, 1
+regional_center C, village F, 5
+village F, city E, 1
+city E, village D, 1
+village D, city G, 2
+city G, village H, 1
+village H, city I, 1
+city I, city A, 2
 
-Заблоковані дороги:
-місто, Ужгород, обласний центр, Мукачево, 5
+Blocked roads:
+city I, city A, 2
+village D, city G, 2
+regional_center C, village F, 5
