@@ -144,33 +144,48 @@ def unconnected_places(
 
     return components
 
-def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 15]]],
+
+def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]],
                         blocked: set[tuple[tuple[str, str], tuple[str, str], int]])\
                         -> set[tuple[tuple[str, str], tuple[str, str], int]]:
     """
     Finds a way to connect all points to the regional center as cheap
     (cost measured in km of roads restored) as possible.
-    Input:
-    {
-        ("village", "A"): {("city", "B"), ("village", "C")},
-        ("city", "B"): {("regional_center"), ("city", "A")},
-        ("village", "C"): {("village", "A"), ("regional_center", "D")},
-        ("regional_center", "D"): {("city", "B"), ("village", "C")}
-    },
-    {
-        (("village", "A"), ("city", "B"), 10)
-        (("regional_center", "D"), ("village", "C"), 8)
-    }
-
-    Output:
-    {
-        (("regional_center", "D"), ("village", "C"), 8)
-    }
+    >>> shortest_connection({\
+        ("village", "A"): {("city", "B"), ("village", "C")},\
+        ("city", "B"): {("regional_center"), ("city", "A")},\
+        ("village", "C"): {("village", "A"), ("regional_center", "D")},\
+        ("regional_center", "D"): {("city", "B"), ("village", "C")}\
+    },{(("village", "A"), ("city", "B"), 10),\
+        (("regional_center", "D"), ("village", "C"), 8)})
+    {(('regional_center', 'D'), ('village', 'C'), 8)}
+    >>> shortest_connection({\
+        ("city", "A"): {("city", "B"), ("regional_center", "C"), ("city", "I")},\
+        ("city", "B"): {("city", "A"), ("regional_center", "C")},\
+        ("regional_center", "C"): {("city", "B"), ("city", "A"), ("city", "F")},\
+        ("city", "H"): {("city", "G"), ("city", "I")},\
+        ("city", "G"): {("city", "H"), ("city", "I"), ("city", "D")},\
+        ("city", "I"): {("city", "G"), ("city", "H"), ("city", "A")},\
+        ("city", "E"): {("city", "D"), ("city", "F")},\
+        ("city", "F"): {("city", "D"), ("city", "E"), ("regional_center", "C")},\
+        ("city", "D"): {("city", "F"), ("city", "E"), ("city", "G")},\
+    },{(("city", "I"), ("city", "A"), 3),\
+    (("city", "G"), ("city", "D"), 5),\
+    (("city", "E"), ("city", "F"), 1),\
+    (("city", "A"), ("city", "C"), 2),\
+    (("regional_center", "C"), ("city", "F"), 3)}) == {\
+    (("regional_center", "C"), ("city", "F"), 3), (("city", "I"), ("city", "A"), 3)}
+    True
     """
     blocked = blocked.copy()
     restored = set()
-    while len(blocked) > 0:
-        disconnected, groups = unconnected_places(paths, blocked)
+    while True:
+        reblocked = {(a, b) for a, b, c in blocked}
+        groups = unconnected_places(paths, reblocked)
+        if len(groups) > 1:
+            disconnected = set.union(*groups[1:])
+        else:
+            break
         accessible = groups[0]
         options = []
         for node in accessible:
@@ -186,16 +201,20 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str], 1
     return restored
 
 
-def write_to_file(filename : str ) -> None: # plus two arguments as a result of func unconnected_places and shortest_places
-    """
-    Function writes output to a file
+def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]], restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
+    with open(filename, 'w', encoding='utf-8') as file:
+        file.write("Незв'язані місця:\n")
+        for bobik in unconnected:
+            file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in bobik])}\n")
+        file.write("\nВідновлені дороги:\n")
+        for road in restored:
+            punkt1, punkt2, length = road
+            file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
 
-    :param filename: str, A name of the file you want to write to
-    :param:
-    :param:
-
-    :return : None
-    """
-    pass
 
 # allows user to run module in terminal
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
