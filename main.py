@@ -226,11 +226,20 @@ def main(input_filename:str, output_filename:str) -> None:
     :param output_f:str, A file to write to
     :return: None
     """
-    all_roads, blocked_roads = read_file(input_filename)
+    parser=argparse.ArgumentParser(description="Process an input file and write to an output file.")
+    parser.add_argument("--input", type=str, required=False, help="Path to the input file")
+    parser.add_argument('--output', type=str, required=False, help="Path to the output file")
+    args = parser.parse_args()
+    if not args.input:
+        args.input = input_filename
+    if not args.output:
+        args.output = output_filename
+
+    all_roads, blocked_roads = read_file(args.input)
     blocked_no_weight = {(road[0], road[1]) for road in blocked_roads}
     unconnected = unconnected_places(all_roads, blocked_no_weight)
     restored = shortest_connection(all_roads, blocked_roads)
-    write_to_file(output_filename, unconnected, restored)
+    write_to_file(args.output, unconnected, restored)
 
 
 if __name__ == '__main__':
