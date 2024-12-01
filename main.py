@@ -1,4 +1,6 @@
 """main.py module"""
+import networkx as nx
+import matplotlib.pyplot as plt
 import argparse
 
 def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, int]]],
@@ -192,18 +194,29 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     return restored
 
 
-def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]], restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
-    with open(filename, 'w', encoding='utf-8') as file:
-        file.write("Незв'язані місця:\n")
-        for bobik in unconnected:
-            file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in bobik])}\n")
-        file.write("\nВідновлені дороги:\n")
-        for road in restored:
-            punkt1, punkt2, length = road
-            file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
+
+def visual(all_roads, blocked_roads):
+    """
+
+    """
+    G = nx.Graph()
+    for place, connections in all_roads.items():
+        for connection in connections:
+            G.add_edge(place, connection)
+
+    edge_colors = ['red' if ((place, connection) in blocked_roads or (connection, place) in blocked_roads) 
+                   else 'black' for place, connections in all_roads.items() for connection in connections]
 
 
-# allows user to run module in terminal
+    pos = nx.spring_layout(G)
+
+
+    plt.figure(figsize=(10, 8))
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500, font_size=10, font_weight='bold', edge_color=edge_colors)
+    
+
+    plt.title("Візуалізація графа зв'язків між місцями")
+    plt.show()
 
 
 if __name__ == '__main__':
