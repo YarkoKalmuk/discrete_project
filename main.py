@@ -232,7 +232,7 @@ def main(input_filename:str, output_filename:str) -> None:
     restored = shortest_connection(all_roads, blocked_roads)
     write_to_file(output_filename, unconnected, restored)
 
-
+main("input_example.csv", "output_example.csv")
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
