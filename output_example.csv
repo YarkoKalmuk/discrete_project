@@ -1,0 +1,8 @@
+Unconnected places:
+regional_center C, city A, village B
+city E, village D, village F
+city G, village H, city I
+
+Restored roads:
+village D, city G, 2
+city I, city A, 2

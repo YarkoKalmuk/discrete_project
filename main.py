@@ -116,7 +116,6 @@ def unconnected_places(
     {('village', 'A'), ('village', 'C')}
     ]
     """
-    # Remove blocked roads from the connections
     roads = {}
     for place, connections in all_roads.items():
         filtered_connections = {conn for conn in connections
@@ -125,7 +124,6 @@ def unconnected_places(
 
     components = []
 
-    # Find all connected components
     for place in list(roads):
         if place in roads:
             component = set()
@@ -138,7 +136,6 @@ def unconnected_places(
                     del roads[node]
             components.append(component)
 
-    # Sort components: put the one containing the regional center first
     components.sort(key=lambda comp:
             any((place[0] == "regional_center" for place in comp)), reverse=True)
 
@@ -201,12 +198,21 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     return restored
 
 
-def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]], restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
+def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]],
+                  restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
+    """
+    Function writes result to a file
+
+    :param filename: str, A file to write to
+    :param unconnected: A result of unconnected_places function
+    :param restored: A result of shortest_connection function
+    :return: None
+    """
     with open(filename, 'w', encoding='utf-8') as file:
-        file.write("Незв'язані місця:\n")
+        file.write("Unconnected places:\n")
         for bobik in unconnected:
             file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in bobik])}\n")
-        file.write("\nВідновлені дороги:\n")
+        file.write("\nRestored roads:\n")
         for road in restored:
             punkt1, punkt2, length = road
             file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
@@ -223,10 +229,9 @@ def main(input_filename:str, output_filename:str) -> None:
     all_roads, blocked_roads = read_file(input_filename)
     blocked_no_weight = {(road[0], road[1]) for road in blocked_roads}
     unconnected = unconnected_places(all_roads, blocked_no_weight)
-    restored = shortest_connection(unconnected, blocked_roads)
+    restored = shortest_connection(all_roads, blocked_roads)
     write_to_file(output_filename, unconnected, restored)
 
-main("input_example.csv", "output_example.csv")
 
 if __name__ == '__main__':
     import doctest
