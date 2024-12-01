@@ -222,28 +222,42 @@ def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]],
 
 def visual(all_roads, blocked_roads):
     """
+    Creates a visualization of a graph representing connections between places,
+    with the ability to highlight blocked roads.
+    
+    The function draws a graph where nodes represent locations and edges
+    represent connections between them. Blocked roads are highlighted in red.
 
+    :param all_roads: A dictionary where keys are tuples (type, name) of places
+                      and values are sets of connected places as tuples.
+    :param blocked_roads: A set of tuples representing blocked roads between places.
+
+    >>> all_roads = {
+    ...     ("місто", "A"): {("село", "B")},
+    ...     ("село", "B"): {("місто", "A"), ("обласний центр", "C")},
+    ...     ("обласний центр", "C"): {("село", "B"), ("село", "F")},
+    ...     ("село", "F"): {("обласний центр", "C"), ("місто", "E")}
+    ... }
+    >>> blocked_roads = {(("місто", "A"), ("село", "B"))}
+    >>> visual(all_roads, blocked_roads)
     """
     G = nx.Graph()
     for place, connections in all_roads.items():
         for connection in connections:
             G.add_edge(place, connection)
-
     edge_colors = ['red' if ((place, connection) in blocked_roads or (connection, place) in blocked_roads) 
                    else 'black' for place, connections in all_roads.items() for connection in connections]
-
-
     pos = nx.spring_layout(G)
-
-
     plt.figure(figsize=(10, 8))
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500, font_size=10, font_weight='bold', edge_color=edge_colors)
-    
-
+    nx.draw(G, pos, with_labels=True,
+             node_color='lightblue',
+                  node_size=500,
+                      font_size=10,
+                          font_weight='bold',
+                              edge_color=edge_colors)
     plt.title("Візуалізація графа зв'язків між місцями")
     plt.show()
 
-    
 def main(input_filename:str, output_filename:str) -> None:
     """
     A main function
@@ -267,6 +281,10 @@ def main(input_filename:str, output_filename:str) -> None:
     restored = shortest_connection(all_roads, blocked_roads)
     write_to_file(args.output, unconnected, restored)
     print("Processing complete!")
+
+res = read_file("discrete_project\input_example2.csv")
+all_roads, blocked_roads = res
+visual(all_roads, blocked_roads)
 
 
 if __name__ == '__main__':
