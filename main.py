@@ -193,7 +193,15 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
         restored.add(choice)
     return restored
 
-
+def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]], restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
+    with open(filename, 'w', encoding='utf-8') as file:
+        file.write("Незв'язані місця:\n")
+        for bobik in unconnected:
+            file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in bobik])}\n")
+        file.write("\nВідновлені дороги:\n")
+        for road in restored:
+            punkt1, punkt2, length = road
+            file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
 
 def visual(all_roads, blocked_roads):
     """
