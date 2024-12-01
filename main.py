@@ -248,12 +248,12 @@ def visual(all_roads, blocked_roads):
     edge_colors = ['red' if ((place, connection) in blocked_roads or (connection, place) in blocked_roads) 
                    else 'black' for place, connections in all_roads.items() for connection in connections]
     pos = nx.spring_layout(G)
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(13, 9))
     nx.draw(G, pos, with_labels=True,
-             node_color='lightblue',
-                  node_size=500,
-                      font_size=10,
-                          font_weight='bold',
+             node_color='green',
+                  node_size = 200,
+                      font_size=15,
+                          font_weight=None,
                               edge_color=edge_colors)
     plt.title("Візуалізація графа зв'язків між місцями")
     plt.show()
@@ -282,7 +282,7 @@ def main(input_filename:str, output_filename:str) -> None:
     write_to_file(args.output, unconnected, restored)
     print("Processing complete!")
 
-res = read_file("discrete_project\input_example2.csv")
+res = read_file("discrete_project\input_example.csv")
 all_roads, blocked_roads = res
 visual(all_roads, blocked_roads)
 
