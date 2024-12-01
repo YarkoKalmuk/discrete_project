@@ -1,8 +1,9 @@
 """main.py module"""
+import argparse
 import networkx as nx
 import matplotlib.pyplot as plt
-import argparse
 
+print("Script started...")
 def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, int]]],
                                      set[tuple[tuple[str, str], tuple[str, str], int]]]:
     """
@@ -21,14 +22,22 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
 
     Example:
 
-    Зв'язки:
-село A, місто B, 10
-місто B, обласний центр D, 15
-село A, село C, 5
+Connections:
+city A, village B, 1
+village B, regional_center C, 1
+regional_center C, village F, 5
+village F, city E, 1
+city E, village D, 1
+village D, city G, 2
+city G, village H, 1
+village H, city I, 1
+city I, city A, 2
 
-Заблоковані дороги:
-село A, місто B, 10
-село C, обласний центр D, 15
+Blocked roads:
+city I, city A, 2
+village D, city G, 2
+regional_center C, village F, 5
+
 
     Output:
 [
@@ -48,16 +57,16 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
         all_road = {}
         status_road = True
         for i in file:
-            line = i.strip("\n").split(", ")
-            if line == ['']:
+            line = i.strip("\n").split()
+            if line == []:
                 continue
-            if "Заблоковані дороги:" in line:
+            if "Blocked" in line:
                 status_road = False
                 continue
-            elif "Зв'язки:" in line:
+            elif "Connections:" in line:
                 continue
-            key1 = (line[0], line[1])
-            key2 = (line[2], line[3])
+            key1 = (line[0], line[1][:-1])
+            key2 = (line[2], line[3][:-1])
             if status_road:
                 if key1 not in all_road:
                     all_road[key1] = {(key2)}
@@ -72,6 +81,7 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
                 blocked.add(block)
         result = [all_road, blocked]
         return result
+
 
 def unconnected_places(
     all_roads: dict[tuple[str, str], set[tuple[str, str]]],
@@ -109,7 +119,6 @@ def unconnected_places(
     {('village', 'A'), ('village', 'C')}
     ]
     """
-    # Remove blocked roads from the connections
     roads = {}
     for place, connections in all_roads.items():
         filtered_connections = {conn for conn in connections
@@ -118,7 +127,6 @@ def unconnected_places(
 
     components = []
 
-    # Find all connected components
     for place in list(roads):
         if place in roads:
             component = set()
@@ -131,7 +139,6 @@ def unconnected_places(
                     del roads[node]
             components.append(component)
 
-    # Sort components: put the one containing the regional center first
     components.sort(key=lambda comp:
             any((place[0] == "regional_center" for place in comp)), reverse=True)
 
@@ -193,12 +200,22 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
         restored.add(choice)
     return restored
 
-def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]], restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
+
+def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]],
+                  restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
+    """
+    Function writes result to a file
+
+    :param filename: str, A file to write to
+    :param unconnected: A result of unconnected_places function
+    :param restored: A result of shortest_connection function
+    :return: None
+    """
     with open(filename, 'w', encoding='utf-8') as file:
-        file.write("Незв'язані місця:\n")
+        file.write("Unconnected places:\n")
         for bobik in unconnected:
             file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in bobik])}\n")
-        file.write("\nВідновлені дороги:\n")
+        file.write("\nRestored roads:\n")
         for road in restored:
             punkt1, punkt2, length = road
             file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
@@ -226,7 +243,33 @@ def visual(all_roads, blocked_roads):
     plt.title("Візуалізація графа зв'язків між місцями")
     plt.show()
 
+    
+def main(input_filename:str, output_filename:str) -> None:
+    """
+    A main function
+
+    :param input_f:str, A file to read from
+    :param output_f:str, A file to write to
+    :return: None
+    """
+    parser=argparse.ArgumentParser(description="Process an input file and write to an output file.")
+    parser.add_argument("--input", type=str, required=False, help="Path to the input file")
+    parser.add_argument('--output', type=str, required=False, help="Path to the output file")
+    args = parser.parse_args()
+    if not args.input:
+        args.input = input_filename
+    if not args.output:
+        args.output = output_filename
+
+    all_roads, blocked_roads = read_file(args.input)
+    blocked_no_weight = {(road[0], road[1]) for road in blocked_roads}
+    unconnected = unconnected_places(all_roads, blocked_no_weight)
+    restored = shortest_connection(all_roads, blocked_roads)
+    write_to_file(args.output, unconnected, restored)
+    print("Processing complete!")
+
 
 if __name__ == '__main__':
+    main("input_example.csv", "output_example.csv")
     import doctest
     doctest.testmod()
