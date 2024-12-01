@@ -1,6 +1,7 @@
 """main.py module"""
 import argparse
 
+print("Script started...")
 def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, int]]],
                                      set[tuple[tuple[str, str], tuple[str, str], int]]]:
     """
@@ -240,8 +241,10 @@ def main(input_filename:str, output_filename:str) -> None:
     unconnected = unconnected_places(all_roads, blocked_no_weight)
     restored = shortest_connection(all_roads, blocked_roads)
     write_to_file(args.output, unconnected, restored)
+    print("Processing complete!")
 
 
 if __name__ == '__main__':
+    main("input_example.csv", "output_example.csv")
     import doctest
     doctest.testmod()
