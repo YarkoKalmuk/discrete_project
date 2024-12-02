@@ -282,7 +282,7 @@ def main(input_filename:str, output_filename:str) -> None:
     write_to_file(args.output, unconnected, restored)
     print("Processing complete!")
 
-res = read_file("discrete_project\input_example.csv")
+res = read_file("input_example.csv")
 all_roads, blocked_roads = res
 visual(all_roads, blocked_roads)
 
