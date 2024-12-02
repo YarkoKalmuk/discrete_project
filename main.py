@@ -3,7 +3,8 @@ A library for finding disconnected vertices in a graph and
 the cheapest way to restore connection.
 """
 import argparse
-
+import networkx as nx
+import matplotlib.pyplot as plt
 
 def read_file(filename: str) -> tuple[dict[tuple[str, str]: set[tuple[str, str, int]]],
                                       set[tuple[tuple[str, str], tuple[str, str], int]]]:
@@ -86,6 +87,7 @@ regional_center C, village F, 5
                 block = (key1, key2, int(line[4]))
                 blocked.add(block)
         return all_road, blocked
+
 
 
 def unconnected_places(
@@ -211,6 +213,7 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     return restored
 
 
+
 def write_to_file(filename: str, unconnected: set[frozenset[tuple[str, str]]],
                   restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
     """
@@ -230,6 +233,47 @@ def write_to_file(filename: str, unconnected: set[frozenset[tuple[str, str]]],
             punkt1, punkt2, length = road
             file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
 
+def visual(all_roads, blocked_roads):
+    """
+    Creates a visualization of a graph representing connections between places,
+    with the ability to highlight blocked roads.
+    
+    The function draws a graph where nodes represent locations and edges
+    represent connections between them. Blocked roads are highlighted in red.
+
+    :param all_roads: A dictionary where keys are tuples (type, name) of places
+                      and values are sets of connected places as tuples.
+    :param blocked_roads: A set of tuples representing blocked roads between places.
+
+    >>> all_roads = {
+    ...     ("місто", "A"): {("село", "B")},
+    ...     ("село", "B"): {("місто", "A"), ("обласний центр", "C")},
+    ...     ("обласний центр", "C"): {("село", "B"), ("село", "F")},
+    ...     ("село", "F"): {("обласний центр", "C"), ("місто", "E")}
+    ... }
+    >>> blocked_roads = {(("місто", "A"), ("село", "B"))}
+    >>> visual(all_roads, blocked_roads)
+    """
+    G = nx.Graph()
+    for place, connections in all_roads.items():
+        for connection in connections:
+            G.add_edge(place, connection)
+    edge_colors = ['red' if ((place, connection) in blocked_roads or (connection, place) in blocked_roads) 
+                   else 'black' for place, connections in all_roads.items() for connection in connections]
+    pos = nx.spring_layout(G)
+    plt.figure(figsize=(13, 9))
+    nx.draw(G, pos, with_labels=True,
+             node_color='green',
+                  node_size = 200,
+                      font_size=15,
+                          font_weight=None,
+                              edge_color=edge_colors)
+    plt.title("Візуалізація графа зв'язків між місцями")
+    plt.show()
+
+res = read_file("input_example.csv")
+all_roads, blocked_roads = res
+visual(all_roads, blocked_roads)
 
 def main(input_filename:str, output_filename:str) -> None:
     """
