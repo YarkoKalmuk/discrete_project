@@ -1,8 +1,8 @@
 Connections:
-city A, village C, 1
+city A, village B, 1
 village B, regional_center C, 1
 regional_center C, village F, 5
-village F, city D, 1
+village F, city E, 1
 city E, village D, 1
 village D, city G, 2
 city G, village H, 1
