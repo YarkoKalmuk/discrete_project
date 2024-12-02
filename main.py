@@ -1,13 +1,16 @@
-"""main.py module"""
+"""
+A library for finding disconnected vertices in a graph and
+the cheapest way to restore connection.
+"""
 import argparse
 
-print("Script started...")
-def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, int]]],
-                                     set[tuple[tuple[str, str], tuple[str, str], int]]]:
+
+def read_file(filename: str) -> tuple[dict[tuple[str, str]: set[tuple[str, str, int]]],
+                                      set[tuple[tuple[str, str], tuple[str, str], int]]]:
     """
     Reads a csv file and returns a list with first el as dictionary with keys as tuples
     containing type of place and its name and values as set of connected
-    places as tuples of type of place and its name and int as a road lenght, 
+    places as tuples of type of place and its name and int as a road length,
     and second element in list is set of blocked roads.
 
     :param filename: str, A file name to read from
@@ -16,7 +19,7 @@ def read_file(filename: str) -> list[ dict[tuple[str, str]: set[tuple[str, str, 
         - first el of list is a dictionary with type and name of place as keys and
     type, name of connected places and distance between them as values,
         - second el is a set of blocked roads, as tuples of tuple of first
-    place and its type and another tuple as second place, its name and lenght of the road.
+    place and its type and another tuple as second place, its name and length of the road.
 
     Example:
 
@@ -38,17 +41,22 @@ regional_center C, village F, 5
 
 
     Output:
-[
-    {
-        ("village", "A"): {("city", "B"), ("village", "C")},
-        ("city", "B"): {("regional_center", "D")},
-        ("village", "C"): ("village", "A")
-    },
-    {
-        (("village", "A"), ("city", "B"), 10),
-        (("village", "C"), ("regional_center", "D"), 15),
-    }
-]
+(
+{   ('city', 'A'): {('city', 'I'), ('village', 'B')},
+    ('village', 'B'): {('regional_center', 'C'), ('city', 'A')},
+    ('regional_center', 'C'): {('village', 'F'), ('village', 'B')},
+    ('village', 'F'): {('regional_center', 'C'), ('city', 'E')},
+    ('city', 'E'): {('village', 'F'), ('village', 'D')},
+    ('village', 'D'): {('city', 'G'), ('city', 'E')},
+    ('city', 'G'): {('village', 'H'), ('village', 'D')},
+    ('village', 'H'): {('city', 'G'), ('city', 'I')},
+    ('city', 'I'): {('village', 'H'), ('city', 'A')}
+},
+{   (('regional_center', 'C'), ('village', 'F'), 5),
+    (('city', 'I'), ('city', 'A'), 2),
+    (('village', 'D'), ('city', 'G'), 2)
+})
+
     """
     with open(filename, 'r', encoding='utf-8') as file:
         blocked = set()
@@ -77,14 +85,13 @@ regional_center C, village F, 5
             else:
                 block = (key1, key2, int(line[4]))
                 blocked.add(block)
-        result = [all_road, blocked]
-        return result
+        return all_road, blocked
 
 
 def unconnected_places(
     all_roads: dict[tuple[str, str], set[tuple[str, str]]],
     blocked_roads: set[tuple[tuple[str, str], tuple[str, str]]]
-) -> list[set[tuple[str, str]]]:
+) -> tuple[set[tuple[str, str]], set[frozenset[tuple[str, str]]]]:
     """
     Function finds all unconnected places and returns them.
 
@@ -95,8 +102,10 @@ def unconnected_places(
     :param blocked_roads: set[tuple[tuple[str, str], tuple[str, str]]], A set
     of tuples representing roads that are blocked.
 
-    :return: list[set[tuple[str, str]]], A list where each element is a set
-    of connected components. The first element includes the regional center.
+    :return: tuple[set[tuple[str, str]], set[frozenset[tuple[str, str]]]],
+    A tuple with connected and unconnected places. The first
+    set includes the regional center and elements connected to it, the second
+    set includes frozen sets of groups of unconnected places.
 
     Input:
     all_roads = {
@@ -112,10 +121,10 @@ def unconnected_places(
 
     Output:
 
-    [
-    {('regional_center', 'D'), ('city', 'B')}, 
-    {('village', 'A'), ('village', 'C')}
-    ]
+    (
+    {('regional_center', 'D'), ('city', 'B')},
+    {{('village', 'A'), ('village', 'C')}}
+    )
     """
     roads = {}
     for place, connections in all_roads.items():
@@ -123,24 +132,27 @@ def unconnected_places(
             if (place, conn) not in blocked_roads and (conn, place) not in blocked_roads}
         roads[place] = filtered_connections
 
-    components = []
-
+    central = set()
+    components = set()
     for place in list(roads):
+        flag = False
         if place in roads:
             component = set()
             stack = [place]
             while stack:
                 node = stack.pop()
                 if node in roads:
+                    if node[0] == "regional_center":
+                        flag = True
                     component.add(node)
                     stack.extend(roads[node])
                     del roads[node]
-            components.append(component)
+            if flag:
+                central = component
+            else:
+                components.add(frozenset(component))
 
-    components.sort(key=lambda comp:
-            any((place[0] == "regional_center" for place in comp)), reverse=True)
-
-    return components
+    return central, components
 
 
 def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]],
@@ -151,7 +163,7 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     (cost measured in km of roads restored) as possible.
     >>> shortest_connection({\
         ("village", "A"): {("city", "B"), ("village", "C")},\
-        ("city", "B"): {("regional_center"), ("city", "A")},\
+        ("city", "B"): {("regional_center", "D"), ("city", "A")},\
         ("village", "C"): {("village", "A"), ("regional_center", "D")},\
         ("regional_center", "D"): {("city", "B"), ("village", "C")}\
     },{(("village", "A"), ("city", "B"), 10),\
@@ -179,12 +191,12 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     restored = set()
     while True:
         reblocked = {(a, b) for a, b, c in blocked}
-        groups = unconnected_places(paths, reblocked)
-        if len(groups) > 1:
-            disconnected = set.union(*groups[1:])
-        else:
+        accessible, groups = unconnected_places(paths, reblocked)
+        disconnected = set()
+        if len(groups) == 0:
             break
-        accessible = groups[0]
+        for group in groups:
+            disconnected.update(set(group))
         options = []
         for node in accessible:
             for vertice in disconnected:
@@ -199,7 +211,7 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     return restored
 
 
-def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]],
+def write_to_file(filename: str, unconnected: set[frozenset[tuple[str, str]]],
                   restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
     """
     Function writes result to a file
@@ -210,9 +222,9 @@ def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]],
     :return: None
     """
     with open(filename, 'w', encoding='utf-8') as file:
-        file.write("Unconnected places:\n")
-        for bobik in unconnected:
-            file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in bobik])}\n")
+        file.write("Disconnected places:\n")
+        for group in unconnected:
+            file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in group])}\n")
         file.write("\nRestored roads:\n")
         for road in restored:
             punkt1, punkt2, length = road
@@ -221,12 +233,15 @@ def write_to_file(filename: str, unconnected: list[set[tuple[str, str]]],
 
 def main(input_filename:str, output_filename:str) -> None:
     """
-    A main function
+    A function that leverages other functions by reading a graph from input file,
+    finding groups of disconnected places and the "cheapest" way to restore connection.
+    And then writes its calculations back to output file.
 
-    :param input_f:str, A file to read from
-    :param output_f:str, A file to write to
+    :param input_filename: str, A file to read from
+    :param output_filename: str, A file to write to
     :return: None
     """
+    print("Script started...")
     parser=argparse.ArgumentParser(description="Process an input file and write to an output file.")
     parser.add_argument("--input", type=str, required=False, help="Path to the input file")
     parser.add_argument('--output', type=str, required=False, help="Path to the output file")
@@ -238,7 +253,7 @@ def main(input_filename:str, output_filename:str) -> None:
 
     all_roads, blocked_roads = read_file(args.input)
     blocked_no_weight = {(road[0], road[1]) for road in blocked_roads}
-    unconnected = unconnected_places(all_roads, blocked_no_weight)
+    connected, unconnected = unconnected_places(all_roads, blocked_no_weight)
     restored = shortest_connection(all_roads, blocked_roads)
     write_to_file(args.output, unconnected, restored)
     print("Processing complete!")
