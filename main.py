@@ -258,7 +258,6 @@ def visual(all_roads, blocked_roads, restored_roads=None):
     :param restored_roads: optional argument, display edges as blue if restored
     """
     G = nx.Graph()
-    edge_colors = []
     reblocked = {tuple(sorted([a,b])): c for a,b,c in blocked_roads}
     restored = {}
     if restored_roads:
