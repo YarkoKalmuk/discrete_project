@@ -1,0 +1,20 @@
+Connections:
+regional_center Lviv, village Bryukhovychi
+regional_center Lviv, city Sambir
+city Sambir, city Drohobych
+regional_center Lviv, city Mykolaiv
+city Mykolaiv, city Drohobych
+city Drohobych, city Boryslav
+city Boryslav, city Truskavets
+city Drohobych, city Truskavets
+city Boryslav, village Popeli
+city Boryslav, village Skhidnytsya
+city Mykolaiv, village Drohovyzh
+
+Blocked roads:
+regional_center Lviv, village Bryukhovychi, 2
+regional_center Lviv, city Sambir, 40
+regional_center Lviv, city Mykolaiv, 50
+city Mykolaiv, city Drohobych, 20
+city Boryslav, city Truskavets, 2
+city Boryslav, village Skhidnytsya, 5
