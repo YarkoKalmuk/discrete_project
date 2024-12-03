@@ -2,6 +2,7 @@
 A library for finding disconnected vertices in a graph and
 the cheapest way to restore connection.
 """
+
 import argparse
 
 def read_file(filename: str) -> tuple[dict[tuple[str, str]: set[tuple[str, str, int]]],
@@ -299,8 +300,6 @@ def ui():
     If the paths to input or output files weren't specified, this
     function is called and walks user through the process of solving the problem.
     """
-    import networkx as nx
-    import matplotlib.pyplot as plt
     print("Hello! Specify the path to the graph file, please")
     path = input(">>> ")
     all_r, blocked_r = read_file(path)
@@ -348,31 +347,33 @@ def ui():
             print("See you!")
             return None
 
-def main() -> None:
+def main(argprs) -> None:
     """
     A function that implements argparse functionality.
     While calling the function in terminal, specify the path to input and output files, e.g.:
     python3 main.py --input input_example --output output_example
     :return: None
     """
-    parser=argparse.ArgumentParser(description="Process an input file and write to an output file.")
-    parser.add_argument("--input", type=str, required=False, help="Path to the input file")
-    parser.add_argument('--output', type=str, required=False, help="Path to the output file")
-    args = parser.parse_args()
-    if not args.input or not args.output:
-        ui()
-        return None
     print("Script started...")
-    all_roads, blocked_roads = read_file(args.input)
+    all_roads, blocked_roads = read_file(argprs.input)
     blocked_no_weight = {(road[0], road[1]) for road in blocked_roads}
     _, unconnected = unconnected_places(all_roads, blocked_no_weight)
     restored = shortest_connection(all_roads, blocked_roads)
-    write_to_file(args.output, unconnected, restored)
+    write_to_file(argprs.output, unconnected, restored)
     print("Processing complete!")
     return None
 
 
 if __name__ == '__main__':
-    main()
+    parser=argparse.ArgumentParser(description="Process an input file and write to an output file.")
+    parser.add_argument("--input", type=str, required=False, help="Path to the input file")
+    parser.add_argument('--output', type=str, required=False, help="Path to the output file")
+    args = parser.parse_args()
+    if not args.input or not args.output:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        ui()
+    else:
+        main(args)
     import doctest
     doctest.testmod()
