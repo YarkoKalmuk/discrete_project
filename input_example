@@ -1,0 +1,15 @@
+Connections:
+city A, village B
+village B, regional_center C
+regional_center C, village F
+village F, city E
+city E, village D
+village D, city G
+city G, village H
+village H, city I
+city I, city A
+
+Blocked roads:
+city I, city A, 2
+village D, city G, 2
+regional_center C, village F, 5

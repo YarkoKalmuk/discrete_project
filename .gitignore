@@ -1,0 +1,6 @@
+# Ignore virtual environment folder
+myenv/
+__pycache__/
+output
+output_example
+temp.py
