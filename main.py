@@ -2,16 +2,20 @@
 A library for finding disconnected vertices in a graph and
 the cheapest way to restore connection.
 """
-
 import argparse
+
 
 def read_file(filename: str) -> tuple[dict[tuple[str, str]: set[tuple[str, str, int]]],
                                       set[tuple[tuple[str, str], tuple[str, str], int]]]:
     """
-    Reads a txt file and returns a list with first el as dictionary with keys as tuples
-    containing type of place and its name and values as set of connected
-    places as tuples of type of place and its name and int as a road length,
-    and second element in list is set of blocked roads.
+    Reads a graph-containing file, which is split into 2 parts:
+    Connections and Blocked roads, the first one containing edges between nodes in a
+    non-directional graph, and the second one being blocked edges - a subset of the first part,
+    additionally having the third parameter - length of the blocked road, which we will need in
+    other functions. Returns 
+    1. A dictionary with node being the key and a set with adjacent nodes being the value.
+    2. A set of blocked roads, a single blocked road being a tuple of node1, node2 and the weight
+    of the edge.
 
     :param filename: str, A file name to read from
 
@@ -89,13 +93,12 @@ regional_center C, village F, 5
         return all_road, blocked
 
 
-
-def unconnected_places(
+def disconnected_places(
     all_roads: dict[tuple[str, str], set[tuple[str, str]]],
     blocked_roads: set[tuple[tuple[str, str], tuple[str, str]]]
 ) -> tuple[set[tuple[str, str]], set[frozenset[tuple[str, str]]]]:
     """
-    Function finds all unconnected places and returns them.
+    Function finds all disconnected places and returns them.
 
     :param all_roads: dict[tuple[str, str], set[tuple[str, str]]], A dictionary,
     where the key is the name and type of a place, and the value is a set of
@@ -105,9 +108,9 @@ def unconnected_places(
     of tuples representing roads that are blocked.
 
     :return: tuple[set[tuple[str, str]], set[frozenset[tuple[str, str]]]],
-    A tuple with connected and unconnected places. The first
+    A tuple with connected and disconnected places. The first
     set includes the regional center and elements connected to it, the second
-    set includes frozen sets of groups of unconnected places.
+    set includes frozen sets of groups of disconnected places.
 
     Input:
     all_roads = {
@@ -119,7 +122,7 @@ def unconnected_places(
 
     blocked_roads = {(("village", "A"), ("city", "B"))}
 
-    unconnected_places(all_roads, blocked_roads)
+    disconnected_places(all_roads, blocked_roads)
 
     Output:
 
@@ -163,6 +166,11 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     """
     Finds a way to connect all points to the regional center as cheap
     (cost measured in km of roads restored) as possible.
+    :param paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]], a graph represented
+    as a dictionary.
+    :param blocked: set[tuple[tuple[str, str], tuple[str, str], int]], a set of blocked edges
+    :return: set[tuple[tuple[str, str], tuple[str, str], int]], a set of roads (edges), that 
+    represent the cheapest way to restore connections to all nodes.
     >>> shortest_connection({\
         ("village", "A"): {("city", "B"), ("village", "C")},\
         ("city", "B"): {("regional_center", "D"), ("city", "A")},\
@@ -193,7 +201,7 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     restored = set()
     while True:
         reblocked = {(a, b) for a, b, c in blocked}
-        accessible, groups = unconnected_places(paths, reblocked)
+        accessible, groups = disconnected_places(paths, reblocked)
         disconnected = set()
         if len(groups) == 0:
             break
@@ -215,42 +223,46 @@ def shortest_connection(paths: dict[tuple[str,str]: set[tuple[tuple[str, str]]]]
     return restored
 
 
-
-def write_to_file(filename: str, unconnected: set[frozenset[tuple[str, str]]],
+def write_to_file(filename: str, disconnected: set[frozenset[tuple[str, str]]],
                   restored: set[tuple[tuple[str, str], tuple[str, str], int]]) -> None:
     """
     Function writes result to a file
 
     :param filename: str, A file to write to
-    :param unconnected: A result of unconnected_places function
+    :param disconnected: A result of disconnected_places function
     :param restored: A result of shortest_connection function
     :return: None
     """
     with open(filename, 'w', encoding='utf-8') as file:
         file.write("Disconnected places:\n")
-        for group in unconnected:
+        for group in disconnected:
             file.write(f"{', '.join([f'{place[0]} {place[1]}' for place in group])}\n")
         file.write("\nRestored roads:\n")
         for road in restored:
             punkt1, punkt2, length = road
             file.write(f"{punkt1[0]} {punkt1[1]}, {punkt2[0]} {punkt2[1]}, {length}\n")
 
-def visual(all_roads, blocked_roads, restored_roads = set()):
+
+def visual(all_roads, blocked_roads, restored_roads=None):
     """
     Creates a visualization of a graph representing connections between places,
     with the ability to highlight blocked roads.
     
     The function draws a graph where nodes represent locations and edges
     represent connections between them. Blocked roads are highlighted in red.
+    Restored roads are highlighted in green. Normal roads are green.
 
     :param all_roads: A dictionary where keys are tuples (type, name) of places
                       and values are sets of connected places as tuples.
     :param blocked_roads: A set of tuples representing blocked roads between places.
+    :param restored_roads: optional argument, display edges as blue if restored
     """
     G = nx.Graph()
     edge_colors = []
-    reblocked = {tuple(sorted([a,b])): 1/c for a,b,c in blocked_roads}
-    restored = {tuple(sorted([a,b])): c for a,b,c in restored_roads}
+    reblocked = {tuple(sorted([a,b])): c for a,b,c in blocked_roads}
+    restored = {}
+    if restored_roads:
+        restored = {tuple(sorted([a,b])): c for a,b,c in restored_roads}
     for place, connections in all_roads.items():
         for connection in connections:
             G.add_edge(place, connection)
@@ -264,7 +276,7 @@ def visual(all_roads, blocked_roads, restored_roads = set()):
                 edge_colors.append("red")
         else:
             edge_colors.append("green")
-    nx.set_edge_attributes(G, values = reblocked, name = 'weight')
+
     regional = ()
     labels = {}
     for edge in G.nodes():
@@ -273,10 +285,9 @@ def visual(all_roads, blocked_roads, restored_roads = set()):
             labels[edge] = "R.C. "+edge[1]
         else:
             labels[edge] = edge[1]
+
     pos = nx.bfs_layout(G,regional)
     plt.figure(figsize=(15, 8))
-    edge_labels = nx.get_edge_attributes(G, "weight")
-    edge_labels = {key: int(1/value) for key, value in edge_labels.items()}
     nx.draw(G, pos, with_labels=False,
             node_color='green',
                 node_size = 800,
@@ -285,14 +296,10 @@ def visual(all_roads, blocked_roads, restored_roads = set()):
                             edge_color=edge_colors,
                                 style="dashed",
                                     width = 3.5)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=15)
+    nx.draw_networkx_edge_labels(G, pos, reblocked, font_size=15)
     nx.draw_networkx_labels(G, pos, labels, font_size=17, font_color="black")
-
-    plt.title("Візуалізація графа зв'язків між місцями")
     plt.gca().margins(0.08)
-    plt.axis("off")
     plt.show()
-    return None
 
 
 def ui():
@@ -304,11 +311,6 @@ def ui():
     path = input(">>> ")
     all_r, blocked_r = read_file(path)
     reblocked = {(a,b) for a,b,c in blocked_r}
-    # print("Here are the places, disconnected from the regional center:")
-    # _, places = unconnected_places(all_r, blocked_r)
-    # for place in places:
-    #     print(place)
-    
     while True:
         print("What do you want to do now?")
         print("0. Visualize the graph")
@@ -325,8 +327,7 @@ def ui():
             visual(all_r, blocked_r)
         elif choice == "1":
             print("Here are the places, disconnected from the regional center:\n")
-            # print((all_r, blocked_r))
-            _, groups = unconnected_places(all_r, reblocked)
+            _, groups = disconnected_places(all_r, reblocked)
             for group in groups:
                 for locality in group:
                     print(" ".join(locality))
@@ -337,7 +338,8 @@ def ui():
             total_restored = 0
             for road in restored:
                 total_restored += road[2]
-                print(f"Restore {road[2]} km between {road[0][0]} {road[0][1]} and {road[1][0]} {road[1][1]}")
+                print(f"Restore {road[2]} km between {road[0][0]} \
+{road[0][1]} and {road[1][0]} {road[1][1]}")
             print(f"In total, {total_restored} km of roads need to be restored\n")
         elif choice == "3":
             print("Cool! The blue roads are the ones restored")
@@ -347,7 +349,8 @@ def ui():
             print("See you!")
             return None
 
-def main(argprs) -> None:
+
+def main(argprs):
     """
     A function that implements argparse functionality.
     While calling the function in terminal, specify the path to input and output files, e.g.:
@@ -357,15 +360,14 @@ def main(argprs) -> None:
     print("Script started...")
     all_roads, blocked_roads = read_file(argprs.input)
     blocked_no_weight = {(road[0], road[1]) for road in blocked_roads}
-    _, unconnected = unconnected_places(all_roads, blocked_no_weight)
+    _, disconnected = disconnected_places(all_roads, blocked_no_weight)
     restored = shortest_connection(all_roads, blocked_roads)
-    write_to_file(argprs.output, unconnected, restored)
-    print("Processing complete!")
-    return None
+    write_to_file(argprs.output, disconnected, restored)
+    print("Processed data has been written to a file!")
 
 
 if __name__ == '__main__':
-    parser=argparse.ArgumentParser(description="Process an input file and write to an output file.")
+    parser=argparse.ArgumentParser(description="Process an input file and write to an output file")
     parser.add_argument("--input", type=str, required=False, help="Path to the input file")
     parser.add_argument('--output', type=str, required=False, help="Path to the output file")
     args = parser.parse_args()
